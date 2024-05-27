@@ -1,0 +1,44 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xray-deployment
+  namespace: ms
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: xray-app
+  template:
+    metadata:
+      labels:
+        app: xray-app
+    spec:
+      containers:
+        - name: xray-app
+          image: <ecr-id>.dkr.ecr.us-east-1.amazonaws.com/xray-app:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: AWS_XRAY_DAEMON_ADDRESS # Especificamos la dirección del servicio de xray
+              value: xray-service.xray:2000
+          resources:
+            requests:
+              cpu: 128m
+              memory: 128Mi
+            limits:
+              cpu: 512m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xray-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 5000
+  selector:
+    app: xray-app
+
